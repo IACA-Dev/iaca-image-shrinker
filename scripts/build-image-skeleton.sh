@@ -82,7 +82,6 @@ function generate_partition_table() {
       ) | fdisk "$LOOP_DEVICE" > /dev/null
 
       last_sector_index=$((last_sector_index + sector_count))
-      echo "last : $last_sector_index"
 
     done < <(find "$SRC_DIR" -mindepth 1 -maxdepth 1 -type d)
 }
