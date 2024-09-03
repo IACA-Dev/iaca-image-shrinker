@@ -128,6 +128,7 @@ function extract_data_from_file {
 
 
   for device in $devices; do
+    echo "Extracting data from ${device}.."
     local device_dir=${DATA_DIR}/$(basename $device)
     mkdir "$device_dir"
 
@@ -145,6 +146,8 @@ function extract_data_from_file {
     local size=$(du -s $device_tmp_dir | awk '{print $1}')
 
     echo -e "{\"type\":\"$fs_type\",\"size\":$size,\"label\":\"$label\"}" > "${device_dir}/info.json"
+    echo -e "- $device\n\tFS TYPE : $fs_type\n\tSIZE : $((size * 1024))\n\tLABEL : $label"
+
 
     local src=$(pwd)
     cd "$device_tmp_dir"
@@ -153,6 +156,7 @@ function extract_data_from_file {
 
     umount "$device_tmp_dir"
     rm -d "$device_tmp_dir"
+    echo -e "Data from '${device}' extracted.\n"
   done
   
   
