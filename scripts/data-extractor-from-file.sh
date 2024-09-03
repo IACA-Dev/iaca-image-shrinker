@@ -144,7 +144,7 @@ function extract_data_from_file {
 
     local size=$(du -s $device_tmp_dir | awk '{print $1}')
 
-    echo -e "{\"type\":\"$fs_type\",\"size\":$size,\"label\":\"$label}" > "${device_dir}/info.json"
+    echo -e "{\"type\":\"$fs_type\",\"size\":$size,\"label\":\"$label\"}" > "${device_dir}/info.json"
 
     local src=$(pwd)
     cd "$device_tmp_dir"
