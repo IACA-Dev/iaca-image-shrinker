@@ -132,7 +132,7 @@ function write_labels() {
   done < <(find "$SRC_DIR" -mindepth 1 -maxdepth 1 -type d)
 }
 
-function build-image-skeleton {
+function build_image_skeleton {
   SRC_DIR=$1
   IMAGE_FILE=$2
 
