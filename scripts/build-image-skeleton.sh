@@ -21,9 +21,10 @@ if [ -z "$UTILS_SOURCED" ]; then
 fi
 
 
+
 function check_requirements() {
-  [ -z "$SRC_DIR" ] && { error "$0 <SRC_DIR> <IMAGE_FILE>"; exit 30; }
-  [ -z "$IMAGE_FILE" ] && { error "$0 <SRC_DIR> <IMAGE_FILE>"; exit 30; }
+  [ -z "$SRC_DIR" ] && { error "build_image_skeleton <SRC_DIR> <IMAGE_FILE>"; exit 30; }
+  [ -z "$IMAGE_FILE" ] && { error "build_image_skeleton <SRC_DIR> <IMAGE_FILE>"; exit 30; }
   [ ! -d "$SRC_DIR" ] && { error "Source directory '$SRC_DIR' not found"; exit 31; }
 }
 
@@ -132,7 +133,8 @@ function write_labels() {
   done < <(find "$SRC_DIR" -mindepth 1 -maxdepth 1 -type d)
 }
 
-function build_image_skeleton {
+
+function build_image_skeleton() {
   SRC_DIR=$1
   IMAGE_FILE=$2
 
