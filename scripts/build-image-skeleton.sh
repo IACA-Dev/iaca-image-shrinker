@@ -23,8 +23,9 @@ fi
 
 
 function check_requirements() {
-  [ -z "$SRC_DIR" ] && { error "build_image_skeleton <SRC_DIR> <IMAGE_FILE>"; exit 30; }
-  [ -z "$IMAGE_FILE" ] && { error "build_image_skeleton <SRC_DIR> <IMAGE_FILE>"; exit 30; }
+  [ -z "$SRC_DIR" ] && { error "build_image_skeleton <SRC_DIR> <IMAGE_FILE> <FIRST_SECTOR>"; exit 30; }
+  [ -z "$IMAGE_FILE" ] && { error "build_image_skeleton <SRC_DIR> <IMAGE_FILE> <FIRST_SECTOR>"; exit 30; }
+  [ -z "$FIRST_SECTOR" ] && { error "build_image_skeleton <SRC_DIR> <IMAGE_FILE> <FIRST_SECTOR>"; exit 30; }
   [ ! -d "$SRC_DIR" ] && { error "Source directory '$SRC_DIR' not found"; exit 31; }
 }
 
@@ -161,7 +162,7 @@ function build_image_skeleton() {
   IMAGE_FILE=$2
   OFFSET_PERCENT=10
   MINIMUM_SIZE=$((64*1024))
-  FIRST_SECTOR=20480
+  FIRST_SECTOR=$3
 
   check_is_root
   check_requirements
