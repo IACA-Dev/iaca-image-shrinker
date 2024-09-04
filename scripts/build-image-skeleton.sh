@@ -28,11 +28,23 @@ function check_requirements() {
   [ ! -d "$SRC_DIR" ] && { error "Source directory '$SRC_DIR' not found"; exit 31; }
 }
 
-function get_size() {
+function get_size_with_offset() {
   local info_file=${1}/info.json
   [ ! -f "$info_file" ] && { error "Missing 'info.json' file in '$1'."; exit 32; }
 
-  cat "$info_file" | jq '.size' || { error "No attribut 'size' found in '$info_file'."; exit 33; }
+  local size=$(cat "$info_file" | jq '.size')
+  if [ $? -ne 0 ]; then
+   error "No attribut 'size' found in '$info_file'."
+   exit 33
+  fi
+
+  local size_with_offset=$((size + (size * OFFSET_PERCENT / 100)))
+
+  if [ $MINIMUM_SIZE -gt $size_with_offset ]; then
+    echo $MINIMUM_SIZE
+  else
+    echo $size_with_offset
+  fi
 }
 
 function get_label() {
@@ -52,7 +64,7 @@ function get_fs_type() {
 function get_total_size() {
   local total=0
   while IFS= read -r subdir; do
-    local size=$(get_size "$subdir")
+    local size=$(get_size_with_offset "$subdir")
     total=$((total + size))
   done < <(find "$SRC_DIR" -mindepth 1 -maxdepth 1 -type d)
   echo $total
@@ -60,30 +72,41 @@ function get_total_size() {
 
 function generate_new_image() {
   local size=$1
-  dd if=/dev/zero of="$IMAGE_FILE" bs=$((size * 1024 + (2048 * 512))) count=1 status=progress
+  dd if=/dev/zero of="$IMAGE_FILE" bs=$(((size * 1024 + (FIRST_SECTOR * 512)) / 512)) count=512 status=progress
 }
 
 function generate_partition_table() {
-  local last_sector_index=2048
+  local last_sector_index=$FIRST_SECTOR
+  local i=0
     while IFS= read -r subdir; do
-      local size=$(get_size "$subdir")
+      local size=$(get_size_with_offset "$subdir")
 
       echo "Creating $size bytes partition."
 
       local sector_count=$((size * 1024 / 512))
 
-      (
-      echo n                                            # Add a new partition
-      echo                                              # Default - Primary partition
-      echo                                              # Default - Partition number
-      echo $last_sector_index                           # Default - First sector
-      echo $((last_sector_index + sector_count - 1))    # Last sector (e.g., +100M for 100MB)
-      echo w                                            # Write changes
-      ) | fdisk "$LOOP_DEVICE" > /dev/null
+      if [ $i -lt 3 ]; then
+        (
+        echo n                                            # Add a new partition
+        echo                                              # Default - Primary partition
+        echo                                              # Default - Partition number
+        echo $last_sector_index                           # Default - First sector
+        echo $((last_sector_index + sector_count - 1))    # Last sector (e.g., +100M for 100MB)
+        echo w                                            # Write changes
+        ) | fdisk "$LOOP_DEVICE" > /dev/null
+      else
+        (
+        echo n                                            # Add a new partition
+        echo p                                            # Default - Primary partition
+        echo $last_sector_index                           # Default - First sector
+        echo $((last_sector_index + sector_count - 1))    # Last sector (e.g., +100M for 100MB)
+        echo w                                            # Write changes
+        ) | fdisk "$LOOP_DEVICE" > /dev/null
+      fi
 
       last_sector_index=$((last_sector_index + sector_count))
-
-    done < <(find "$SRC_DIR" -mindepth 1 -maxdepth 1 -type d)
+      i=$((i+1))
+    done < <(find "$SRC_DIR" -mindepth 1 -maxdepth 1 -type d | sort)
 }
 
 function format_partitions() {
@@ -106,7 +129,7 @@ function format_partitions() {
     fi
 
     i=$((i+1))
-  done < <(find "$SRC_DIR" -mindepth 1 -maxdepth 1 -type d)
+  done < <(find "$SRC_DIR" -mindepth 1 -maxdepth 1 -type d | sort)
 }
 
 function write_labels() {
@@ -129,19 +152,22 @@ function write_labels() {
     fi
 
     i=$((i+1))
-  done < <(find "$SRC_DIR" -mindepth 1 -maxdepth 1 -type d)
+  done < <(find "$SRC_DIR" -mindepth 1 -maxdepth 1 -type d | sort)
 }
 
 
 function build_image_skeleton() {
   SRC_DIR=$1
   IMAGE_FILE=$2
+  OFFSET_PERCENT=10
+  MINIMUM_SIZE=$((64*1024))
+  FIRST_SECTOR=20480
 
   check_is_root
   check_requirements
   local total=$(get_total_size)
 
-  echo "Generating $total bytes image."
+  echo "Generating $total kilo bytes image."
   generate_new_image $total
 
   LOOP_DEVICE=$(losetup -fP --show "$IMAGE_FILE")
