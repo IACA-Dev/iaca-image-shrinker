@@ -46,6 +46,8 @@ function check_input_image(){
     error "Partition count ($partition_count) is not within the valid range (1-4)."
     exit 53
   fi
+
+  info "All check passed."
   
   losetup -d "$LOOP_DEVICE"
 }
