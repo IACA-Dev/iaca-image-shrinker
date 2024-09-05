@@ -35,6 +35,22 @@ chmod +x iaca-image-shrinker.sh
 iaca-image-shrinker.sh  -o "output.img" -t "target" "source img"
 ```
 
+#### Examples
+
+```bash
+# Olimex A20
+iaca-image-shrinker.sh  -o output.img -t olimex-a20 ./official-olimex-a20-base.img
+
+# Raspberry
+iaca-image-shrinker.sh  -o output.img -t raspberry ./2021-05-07-raspios-buster-arm64.img
+
+# No specific target (work only on target without bootloader in image)
+iaca-image-shrinker.sh  -o output.img ./input-image.img
+
+```
+
+
+
 ## 🧑‍🤝‍🧑 Contributors
 
 * Julien FAURE [✉️ julien.faure@iaca-electronique.com](mailto:julien.faure@iaca-electronique.com) (*IACA Electronique*)
