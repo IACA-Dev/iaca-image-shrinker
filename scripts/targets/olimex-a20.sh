@@ -8,8 +8,7 @@
 #
 # Error : From 100 to 109
 #   - 100 : Bad usage or image not found
-#   - 101 : Boot retrieving data from source issue
-#   - 102 : Boot writing issue
+#   - 101 : Boot copy issue
 # ============================================
 
 # ---------------------------------------------- OVERRIDABLE VARIABLES
