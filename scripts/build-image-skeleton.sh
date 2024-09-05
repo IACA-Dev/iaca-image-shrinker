@@ -62,6 +62,20 @@ function get_fs_type() {
   cat "$info_file" | jq -r '.type' || { error "No attribut 'type' found in '$info_file'."; exit 33; }
 }
 
+function get_uuid() {
+  local info_file=${1}/info.json
+  [ ! -f "$info_file" ] && { error "Missing 'info.json' file in '$1'."; exit 32; }
+
+  cat "$info_file" | jq -r '.uuid' || { error "No attribut 'uuid' found in '$info_file'."; exit 33; }
+}
+
+function get_disk_identifier() {
+  local info_file=${1}/info.json
+  [ ! -f "$info_file" ] && { error "Missing 'info.json' file in '$1'."; exit 32; }
+
+  cat "$info_file" | jq -r '.disk_id' || { error "No attribut 'disk_id' found in '$info_file'."; exit 33; }
+}
+
 function get_total_size() {
   local total=0
   while IFS= read -r subdir; do
@@ -135,6 +149,33 @@ function format_partitions() {
   done < <(find "$SRC_DIR" -mindepth 1 -maxdepth 1 -type d | sort)
 }
 
+function update_partition_table_with_no_ext4_fs() {
+  local i=1
+  while IFS= read -r subdir; do
+    local fs_device=${LOOP_DEVICE}p${i}
+    local type=$(get_fs_type "$subdir")
+    local fdisk_param=
+
+    if [ "$type" == "vfat" ]; then
+      echo "fat fs detected"
+      fdisk_param=b
+    else
+      error "Filesystem type '$type' is not supported ($fs_device)."
+    fi
+
+    if [ ! -z "$fdisk_param" ]; then
+      (
+      echo t
+      echo $i
+      echo b
+      echo w
+      ) | fdisk "$LOOP_DEVICE" > /dev/null && info "Partition $i updated to type '$type' (fdisk=$fdisk_param)." || { error "Unable to update partition $i to type '$type' (fdisk=$fdisk_param)."; }
+    fi
+
+    i=$((i+1))
+  done < <(find "$SRC_DIR" -mindepth 1 -maxdepth 1 -type d | sort)
+}
+
 function write_labels() {
   local i=1
   while IFS= read -r subdir; do
@@ -158,6 +199,36 @@ function write_labels() {
   done < <(find "$SRC_DIR" -mindepth 1 -maxdepth 1 -type d | sort)
 }
 
+function write_uuid() {
+  local i=1
+  while IFS= read -r subdir; do
+    local uuid=$(get_uuid $subdir)
+
+    if [ ! -z "$uuid" ]; then
+      fs_device=${LOOP_DEVICE}p${i}
+
+
+      local cmd="tune2fs -U $uuid $fs_device"
+
+
+      $cmd > /dev/null && info "UUID '$uuid' set to '$fs_device'." || { warn "Unable to set uuid '$uuid' to device '$fs_device'"; }
+    fi
+
+    i=$((i+1))
+  done < <(find "$SRC_DIR" -mindepth 1 -maxdepth 1 -type d | sort)
+}
+
+function set_disk_identifier() {
+  local disk_id=$(get_disk_identifier "$SRC_DIR")
+  (
+  echo x
+  echo i
+  echo $disk_id
+  echo r
+  echo w
+  ) | fdisk "$LOOP_DEVICE" > /dev/null && info "Disk identifier set to '$disk_id'." || { error "Unable to set disk identifier to '$disk_id'."; }
+}
+
 
 function build_image_skeleton() {
   SRC_DIR=$1
@@ -176,8 +247,11 @@ function build_image_skeleton() {
   LOOP_DEVICE=$(losetup -fP --show "$IMAGE_FILE")
 
   generate_partition_table
+  update_partition_table_with_no_ext4_fs
   format_partitions
   write_labels
+  write_uuid
+  set_disk_identifier
 
   losetup -d "$LOOP_DEVICE"
 }
