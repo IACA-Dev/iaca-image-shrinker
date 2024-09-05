@@ -4,6 +4,7 @@
 #
 # Requirements :
 #   - losetup
+#   - fdisk
 #
 # Error : From 20 to 29
 #   - 20 : Image file not found
@@ -107,6 +108,30 @@ function get_device_label() {
 
 # ============================================
 
+function get_device_uuid() {
+  local device=$1
+
+  if [ ! -b "$device" ]; then
+    return 1
+  fi
+
+  echo "$(lsblk -no UUID "$device")"
+}
+
+# ============================================
+
+function get_disk_identifier() {
+  local device=$LOOP_DEVICE
+
+  if [ ! -b "$device" ]; then
+    return 1
+  fi
+
+  echo "$(fdisk -l $device | grep 'Disk identifier' | awk '{print $3}')"
+}
+
+# ============================================
+
 function extract_data_from_file {
   IMAGE_FILE=$1
   DATA_DIR=$2
@@ -126,6 +151,9 @@ function extract_data_from_file {
 
   local devices=$(get_partition_names_from_device "$LOOP_DEVICE")
 
+  local disk_id=$(get_disk_identifier)
+  echo -e "{\"disk_id\":\"$disk_id\"}" > "${DATA_DIR}/info.json"
+  echo -e "DISK IDENTIFIER : $disk_id"
 
   for device in $devices; do
     echo "Extracting data from ${device}.."
@@ -139,14 +167,15 @@ function extract_data_from_file {
     fi
 
     local label=$(get_device_label "$device")
+    local uuid=$(get_device_uuid "$device")
 
     local device_tmp_dir=$(mktemp -d)
     mount -o ro "$device" "$device_tmp_dir"
 
     local size=$(du -s $device_tmp_dir | awk '{print $1}')
 
-    echo -e "{\"type\":\"$fs_type\",\"size\":$size,\"label\":\"$label\"}" > "${device_dir}/info.json"
-    echo -e "- $device\n\tFS TYPE : $fs_type\n\tSIZE : $((size * 1024))\n\tLABEL : $label"
+    echo -e "{\"uuid\":\"$uuid\",\"type\":\"$fs_type\",\"size\":$size,\"label\":\"$label\"}" > "${device_dir}/info.json"
+    echo -e "- $device\n\tUUID : $uuid\n\tFS TYPE : $fs_type\n\tSIZE : $((size * 1024))\n\tLABEL : $label"
 
 
     local src=$(pwd)
