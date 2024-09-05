@@ -159,8 +159,6 @@ function update_partition_table_with_no_ext4_fs() {
     if [ "$type" == "vfat" ]; then
       echo "fat fs detected"
       fdisk_param=b
-    else
-      error "Filesystem type '$type' is not supported ($fs_device)."
     fi
 
     if [ ! -z "$fdisk_param" ]; then
