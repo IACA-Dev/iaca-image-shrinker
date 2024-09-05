@@ -56,7 +56,7 @@ function main() {
     if [ ! -z "$TARGET" ]; then
       info "=========================================================================================== TARGET CONFIG"
       load_target
-      apply_target_configuration "$OUTPUT_IMAGE_PATH"
+      apply_target_configuration "$INPUT_IMAGE_PATH" "$OUTPUT_IMAGE_PATH"
     fi
 
     info "===========================================================================================\n===========================================================================================\n"
