@@ -118,8 +118,10 @@ function format_partitions() {
     local cmd=
 
     if [ "$type" == "ext4" ]; then
+      echo "ext4 fs detected"
       cmd="mkfs.ext4 $fs_device"
     elif [ "$type" == "vfat" ]; then
+      echo "fat fs detected"
       cmd="mkfs.fat $fs_device"
     else
       error "Filesystem type '$type' is not supported ($fs_device)."
