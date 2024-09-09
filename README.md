@@ -25,7 +25,37 @@ By following a series of optimization steps, thus reducing the image to its opti
 
 ## ▶️ Usage
 
-### From git
+### From Docker *(easy)*
+
+```bash
+docker --debug build -t shrinker .
+docker run --privileged -v /dev:/dev \
+          -it \
+          -v $(pwd):/mnt \
+          shrinker -o /mnt/<output-image> -t <target> /mnt/<input-img>
+```
+
+#### Example
+
+```bash
+ls
+# Result
+# 2021-05-07-raspios-buster-arm64.img
+
+docker --debug build -t shrinker .
+docker run --privileged \
+          -v /dev:/dev \
+          -it \
+          -v $(pwd):/mnt \
+          shrinker -o /mnt/output.img -t raspberry /mnt/2021-05-07-raspios-buster-arm64.img
+
+ls
+# Result
+# 2021-05-07-raspios-buster-arm64.img   output.img
+```
+
+
+### From git *(expert)*
 
 ```bash
 git clone https://github.com/IACA-Dev/iaca-image-shrinker.git
@@ -34,6 +64,29 @@ chmod +x iaca-image-shrinker.sh
 
 iaca-image-shrinker.sh  -o "output.img" -t "target" "source img"
 ```
+
+> ⚠️
+> 
+> Using this way can lead to dependency issue in case where your system doesn't have all required program.
+> 
+> ➡️ It's commended to use **Docker** usage.
+
+
+#### Examples
+
+```bash
+# Olimex A20
+iaca-image-shrinker.sh  -o output.img -t olimex-a20 ./official-olimex-a20-base.img
+
+# Raspberry
+iaca-image-shrinker.sh  -o output.img -t raspberry ./2021-05-07-raspios-buster-arm64.img
+
+# No specific target (work only on target without bootloader in image)
+iaca-image-shrinker.sh  -o output.img ./input-image.img
+
+```
+
+
 
 ## 🧑‍🤝‍🧑 Contributors
 
