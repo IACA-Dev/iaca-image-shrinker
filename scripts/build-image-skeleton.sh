@@ -87,7 +87,7 @@ function get_total_size() {
 
 function generate_new_image() {
   local size=$1
-  dd if=/dev/zero of="$IMAGE_FILE" bs=$(((size * 1024 + (FIRST_SECTOR * 512)) / 512)) count=512 status=progress
+  dd if=/dev/zero of="$IMAGE_FILE" bs=$(((size * 1024 + (FIRST_SECTOR * 512)) / 512)) count=512
 }
 
 function generate_partition_table() {
