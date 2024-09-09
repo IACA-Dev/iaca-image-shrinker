@@ -25,7 +25,37 @@ By following a series of optimization steps, thus reducing the image to its opti
 
 ## ▶️ Usage
 
-### From Docker *(easy)*
+### From Docker Hub *(easy)*
+
+```bash
+docker run --privileged -v /dev:/dev \
+          -it \
+          -v $(pwd):/mnt \
+          iacaelectronique/iaca-image-shrinker:latest -o /mnt/<output-image> -t <target> /mnt/<input-img>
+```
+#### Example
+
+```bash
+ls
+# Result
+# 2021-05-07-raspios-buster-arm64.img
+
+docker run --privileged \
+          -v /dev:/dev \
+          -it \
+          -v $(pwd):/mnt \
+          iacaelectronique/iaca-image-shrinker:latest -o /mnt/output.img -t raspberry /mnt/2021-05-07-raspios-buster-arm64.img
+
+ls
+# Result
+# 2021-05-07-raspios-buster-arm64.img   output.img
+```
+
+> [Docker Hub page](https://hub.docker.com/r/iacaelectronique/iaca-image-shrinker)
+
+___
+
+### From local build Docker
 
 ```bash
 docker --debug build -t shrinker .
@@ -69,7 +99,7 @@ iaca-image-shrinker.sh  -o "output.img" -t "target" "source img"
 > 
 > Using this way can lead to dependency issue in case where your system doesn't have all required program.
 > 
-> ➡️ It's commended to use **Docker** usage.
+> ➡️ It's commended to use **Docker Hub** usage.
 
 
 #### Examples
